@@ -7,7 +7,7 @@
 #include <swarmros/String.h>
 #include <cpswarm_msgs/TargetAssignmentEvent.h>
 #include <cpswarm_msgs/TargetAssignedEvent.h>
-#include <cpswarm_msgs/LocalTargetAssignedEvent.h>
+#include <cpswarm_msgs/TargetAssignedEvent.h>
 #include <turtlebot_compute_cost/ComputeMapCostAction.h>
 #include <move_base_msgs/MoveBaseAction.h>
 
@@ -26,7 +26,7 @@ ros::Subscriber selection_sub;
 ros::Subscriber UUID_sub;
 
 geometry_msgs::PoseWithCovarianceStamped map_position;
-cpswarm_msgs::LocalTargetAssignedEvent target_assigned;
+cpswarm_msgs::TargetAssignedEvent target_assigned;
 string UUID;			//UUID of the CPS
 bool position_received; //TRUE when gps or map position has been received
 bool cps_selected;		//TRUE when cps_selected answer has been received
@@ -49,9 +49,9 @@ void mapPosition_cb(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr &ms
 	position_received = true;
 }
 
-void cpsSelected_cb(const cpswarm_msgs::LocalTargetAssignedEvent::ConstPtr &msg)
+void cpsSelected_cb(const cpswarm_msgs::TargetAssignedEvent::ConstPtr &msg)
 {
-	if (msg->id == target_id)
+	if (msg->target_id == target_id)
 	{
 		target_assigned = *msg;
 		cps_selected = true;
@@ -108,7 +108,7 @@ void execute_map_cb(const turtlebot_compute_cost::ComputeMapCostGoal::ConstPtr &
 	{
 		//return succeed
 		turtlebot_compute_cost::ComputeMapCostResult result;
-		result.target_id = target_assigned.id;
+		result.target_id = target_assigned.target_id;
 		result.local_pose = goal->local_pose;
 		as->setSucceeded(result);
 	}
@@ -145,7 +145,7 @@ int main(int argc, char **argv)
 	ROS_INFO("Using map frame coordinates");
 	global_pos_sub = nh.subscribe<geometry_msgs::PoseWithCovarianceStamped>(map_pose_topic, 10, mapPosition_cb);
 
-	selection_sub = nh.subscribe<cpswarm_msgs::LocalTargetAssignedEvent>(cps_selected_topic, 10, cpsSelected_cb);
+	selection_sub = nh.subscribe<cpswarm_msgs::TargetAssignedEvent>(cps_selected_topic, 10, cpsSelected_cb);
 	UUID_sub = nh.subscribe<swarmros::String>(UUID_topic, 1, UUID_cb);
 	//Initialize publishers
 	cost_pub = nh.advertise<cpswarm_msgs::TargetAssignmentEvent>(target_cost_topic, 10);
